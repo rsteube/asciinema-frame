@@ -11,18 +11,18 @@ import (
 	player "github.com/xakep666/asciinema-player/v3"
 )
 
-type Terminal struct {
+type terminal struct {
 	vt10x vt10x.Terminal
 }
 
-func (t Terminal) Write(p []byte) (n int, err error)      { return t.vt10x.Write(p) }
-func (t Terminal) Close() error                           { return nil }
-func (t Terminal) Dimensions() (width, height int)        { return t.vt10x.Size() }
-func (t Terminal) ToRaw() error                           { return nil }
-func (t Terminal) Restore() error                         { return nil }
-func (t Terminal) Control(control player.PlaybackControl) {}
+func (t terminal) Write(p []byte) (n int, err error)      { return t.vt10x.Write(p) }
+func (t terminal) Close() error                           { return nil }
+func (t terminal) Dimensions() (width, height int)        { return t.vt10x.Size() }
+func (t terminal) ToRaw() error                           { return nil }
+func (t terminal) Restore() error                         { return nil }
+func (t terminal) Control(control player.PlaybackControl) {}
 
-func (t Terminal) Cell(x, y int) (glyph vt10x.Glyph, err error) {
+func (t terminal) Cell(x, y int) (glyph vt10x.Glyph, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch x := r.(type) {
@@ -37,7 +37,7 @@ func (t Terminal) Cell(x, y int) (glyph vt10x.Glyph, err error) {
 	}()
 	return t.vt10x.Cell(x, y), nil
 }
-func (t Terminal) Glyps() [][]vt10x.Glyph {
+func (t terminal) Glyps() [][]vt10x.Glyph {
 	t.vt10x.Lock()
 	defer t.vt10x.Unlock()
 
@@ -66,11 +66,11 @@ const (
 	attrWrap
 )
 
-func (t Terminal) Poster() string {
+func (t terminal) Poster() string {
 	return fmt.Sprintf("%#v", "data:text/plain,"+t.RawString())
 }
 
-func (t Terminal) RawString() string {
+func (t terminal) RawString() string {
 	s := ""
 	// var bg, fg vt10x.Color
 	for _, row := range t.Glyps() {
@@ -121,7 +121,7 @@ func rgb(j int) (r, g, b int) {
 	return (j >> 16) & 0xff, (j >> 8) & 0xff, j & 0xff
 }
 
-func (t Terminal) color(j vt10x.Color) termenv.Color {
+func (t terminal) color(j vt10x.Color) termenv.Color {
 	if j.ANSI() {
 		return termenv.ANSIColor(j)
 	}
@@ -145,7 +145,7 @@ func Frame(reader io.Reader, time float64) frame {
 		panic(err.Error())
 	}
 
-	terminal := Terminal{
+	terminal := terminal{
 		vt10x: vt10x.New(vt10x.WithSize(stream.Header().Width, stream.Header().Height)),
 	}
 
