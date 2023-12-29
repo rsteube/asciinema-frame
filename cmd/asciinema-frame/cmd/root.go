@@ -45,7 +45,7 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 func init() {
-	rootCmd.Flags().Bool("poster", false, "asciinema poster")
+	rootCmd.Flags().Bool("poster", false, "generate poster string")
 
 	carapace.Gen(rootCmd).PositionalCompletion(
 		carapace.ActionFiles(),
