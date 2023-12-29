@@ -1,10 +1,9 @@
-package main
+package frame
 
 import (
 	"errors"
 	"fmt"
-	"os"
-	"strconv"
+	"io"
 	"strings"
 
 	"github.com/hinshun/vt10x"
@@ -66,6 +65,10 @@ const (
 	attrBlink
 	attrWrap
 )
+
+func (t Terminal) Poster() string {
+	return fmt.Sprintf("%#v", "data:text/plain,"+t.RawString())
+}
 
 func (t Terminal) RawString() string {
 	s := ""
@@ -131,14 +134,13 @@ func (t Terminal) color(j vt10x.Color) termenv.Color {
 	return termenv.RGBColor(fmt.Sprintf("#%02x%02x%02x", r, g, b)) // TODO hex color is still wrong
 }
 
-func main() {
-	file, err := os.Open(os.Args[1]) // TODO check arg length
-	if err != nil {
-		panic(err.Error())
-	}
-	defer file.Close()
+type frame interface {
+	Poster() string
+	RawString() string
+}
 
-	stream, err := player.NewStreamFrameSource(file)
+func Frame(reader io.Reader, time float64) frame {
+	stream, err := player.NewStreamFrameSource(reader)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -147,15 +149,10 @@ func main() {
 		vt10x: vt10x.New(vt10x.WithSize(stream.Header().Width, stream.Header().Height)),
 	}
 
-	position, err := strconv.ParseFloat(os.Args[2], 64)
-	if err != nil {
-		panic(err.Error())
-	}
-
 	for stream.Next() {
 		f := stream.Frame()
 
-		if f.Time > position {
+		if f.Time > time {
 			break
 		}
 
@@ -163,8 +160,5 @@ func main() {
 			terminal.Write(f.Data)
 		}
 	}
-
-	// fmt.Println(terminal.vt10x.String())
-	fmt.Println(terminal.RawString())
-	// fmt.Printf("%#v", "data:text/plain,"+terminal.RawString())
+	return frame(terminal)
 }
